@@ -319,3 +319,21 @@ def record_scores():
 
 
 PAGES: dict = {}   # filled by app/main.py so dashboard can switch to the detail page
+
+
+# ---------------------------------------------------------------- Learning resources
+def resources():
+    from app.views.admin import _resource_table, resource_form
+    from services import admin as admin_service
+    user = _me()
+    ui.hero("Learning Resources", "Suggest resources for your subjects. An administrator checks and approves them "
+                                  "before students can see them.")
+    mine = teaching.my_subject_ids(user)
+    t1, t2 = st.tabs(["📚 Resources for my subjects", "➕ Suggest a resource"])
+    with t1:
+        df = admin_service.list_resources(None, mine)
+        _resource_table(df)
+        st.caption("Status: approved = visible to students, pending = waiting for the administrator, "
+                   "rejected = not used.")
+    with t2:
+        resource_form(user, teaching.teacher_subjects(user), "teacher_res")

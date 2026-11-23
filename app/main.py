@@ -18,7 +18,7 @@ st.set_page_config(page_title="AI Personalized Learning Platform", page_icon="�
 
 from app import session  # noqa: E402
 from app.components import ui  # noqa: E402
-from app.views import auth_page, home, profile, student, teacher  # noqa: E402
+from app.views import admin, auth_page, profile, student, teacher  # noqa: E402
 
 ui.inject_css()
 user = session.current_user()
@@ -40,8 +40,13 @@ PAGES = {
     "teacher": [st.Page(teacher.dashboard, title="Class Dashboard", icon="🏠", url_path="teacher", default=True),
                 st.Page(teacher.student_detail, title="Student Detail", icon="🧑‍🎓", url_path="student-detail"),
                 st.Page(teacher.record_scores, title="Record Class Scores", icon="📝", url_path="record-scores"),
+                st.Page(teacher.resources, title="Learning Resources", icon="📚", url_path="teacher-resources"),
                 profile_page],
-    "admin": [st.Page(home.admin_home, title="Dashboard", icon="🏠", url_path="admin", default=True),
+    "admin": [st.Page(admin.dashboard, title="Dashboard", icon="🏠", url_path="admin", default=True),
+              st.Page(admin.users, title="Users", icon="👥", url_path="users"),
+              st.Page(admin.academics, title="Programs & Teachers", icon="🎓", url_path="academics"),
+              st.Page(admin.resources, title="Learning Resources", icon="📚", url_path="resources"),
+              st.Page(admin.audit, title="Audit Log", icon="🗒️", url_path="audit"),
               profile_page],
 }
 if user.role == "teacher":
