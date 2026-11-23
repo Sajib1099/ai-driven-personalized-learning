@@ -18,7 +18,7 @@ st.set_page_config(page_title="AI Personalized Learning Platform", page_icon="�
 
 from app import session  # noqa: E402
 from app.components import ui  # noqa: E402
-from app.views import auth_page, home, profile  # noqa: E402
+from app.views import auth_page, home, profile, student  # noqa: E402
 
 ui.inject_css()
 user = session.current_user()
@@ -31,7 +31,11 @@ if user is None:
 # ----------------------------------------------------------------- role-based pages
 profile_page = st.Page(profile.render, title="My Profile", icon="👤", url_path="profile")
 PAGES = {
-    "student": [st.Page(home.student_home, title="Dashboard", icon="🏠", url_path="student", default=True),
+    "student": [st.Page(student.dashboard, title="Dashboard", icon="🏠", url_path="student", default=True),
+                st.Page(student.performance, title="My Performance", icon="📈", url_path="performance"),
+                st.Page(student.recommendations, title="Recommendations", icon="💡", url_path="recommendations"),
+                st.Page(student.study_plan, title="Study Plan", icon="🗓️", url_path="study-plan"),
+                st.Page(student.ai_prediction, title="AI Prediction", icon="🤖", url_path="ai-prediction"),
                 profile_page],
     "teacher": [st.Page(home.teacher_home, title="Dashboard", icon="🏠", url_path="teacher", default=True),
                 profile_page],

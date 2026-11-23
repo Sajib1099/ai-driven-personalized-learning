@@ -186,3 +186,51 @@ def class_distribution_chart(counts: dict) -> go.Figure:
     fig.update_yaxes(range=[0, max(vals) * 1.25], title=dict(text="Students", font=dict(color=MUTED, size=12)))
     fig.update_xaxes(showgrid=False)
     return fig
+
+
+# ------------------------------------------------------------------ learning-layer charts
+LEVEL_COLORS = {"weak": "#d03b3b", "developing": "#fab219", "strong": "#0ca30c"}   # status palette
+LEVEL_LABELS = {"weak": "Weak (< 50%)", "developing": "Developing (50–69%)", "strong": "Strong (≥ 70%)"}
+LEVEL_ICON = {"weak": "▼", "developing": "●", "strong": "▲"}
+
+
+def level_badge(level: str) -> str:
+    bg = {"weak": "#fbe3e3", "developing": "#fdf0d5", "strong": "#dff3df"}[level]
+    fg = {"weak": "#a32b2b", "developing": "#7a5200", "strong": "#006300"}[level]
+    return (f'<span class="badge" style="background:{bg};color:{fg}">{LEVEL_ICON[level]} '
+            f'{level.title()}</span>')
+
+
+def mastery_bars(labels: list[str], values: list[float], levels: list[str], height: int | None = None) -> go.Figure:
+    """Horizontal bars of mastery %, coloured by level, with value labels (colour never carries meaning alone)."""
+    fig = go.Figure()
+    for lvl in ["weak", "developing", "strong"]:
+        idx = [i for i, l in enumerate(levels) if l == lvl]
+        if not idx:
+            continue
+        fig.add_trace(go.Bar(
+            name=LEVEL_LABELS[lvl], y=[labels[i] for i in idx], x=[values[i] for i in idx], orientation="h",
+            marker=dict(color=LEVEL_COLORS[lvl], line=dict(color=SURFACE, width=2)),
+            text=[f"{values[i]:.0f}%" for i in idx], textposition="outside", textfont=dict(color=INK),
+            hovertemplate="%{y}: %{x:.1f}%<extra></extra>", cliponaxis=False))
+    _base_layout(fig, height=height or max(220, 36 * len(labels) + 80),
+                 legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0, title=None, traceorder="normal"))
+    fig.update_xaxes(range=[0, 112], ticksuffix="%")
+    fig.update_yaxes(showgrid=False, automargin=True, categoryorder="array", categoryarray=labels[::-1])
+    for x in (50, 70):
+        fig.add_vline(x=x, line_dash="dot", line_color=AXIS, line_width=1)
+    return fig
+
+
+def progress_bars(subjects: list[str], first: list[float], latest: list[float]) -> go.Figure:
+    """First vs latest assessment average per subject (ordinal light → dark blue)."""
+    fig = go.Figure()
+    for name, vals, color in [("First assessment", first, "#86b6ef"), ("Latest assessment", latest, "#1c5cab")]:
+        fig.add_trace(go.Bar(name=name, x=subjects, y=vals, marker=dict(color=color, line=dict(color=SURFACE, width=2)),
+                             text=[f"{v:.0f}%" for v in vals], textposition="outside", textfont=dict(color=INK_2, size=11),
+                             hovertemplate="%{x}<br>" + name + ": %{y:.1f}%<extra></extra>", cliponaxis=False))
+    _base_layout(fig, height=330, barmode="group", bargap=0.3,
+                 legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0, title=None))
+    fig.update_yaxes(range=[0, 110], ticksuffix="%")
+    fig.update_xaxes(showgrid=False)
+    return fig
