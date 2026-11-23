@@ -13,7 +13,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    with op.batch_alter_table("teacher_assignments", recreate="always") as batch_op:
+    with op.batch_alter_table("teacher_assignments", recreate="auto") as batch_op:
         batch_op.add_column(sa.Column("subject_id", sa.Integer(), nullable=True))
         batch_op.create_foreign_key("fk_teacher_assignments_subject_id", "subjects", ["subject_id"], ["id"],
                                     ondelete="CASCADE")
@@ -25,7 +25,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    with op.batch_alter_table("teacher_assignments", recreate="always") as batch_op:
+    with op.batch_alter_table("teacher_assignments", recreate="auto") as batch_op:
         batch_op.drop_constraint("uq_teacher_subject", type_="unique")
         batch_op.drop_constraint("ck_assignment_target_v2", type_="check")
         batch_op.create_check_constraint("ck_assignment_target", "student_id IS NOT NULL OR course_id IS NOT NULL")

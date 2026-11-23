@@ -1,6 +1,8 @@
 """Sign-in and student registration screen (shown when nobody is logged in)."""
 from __future__ import annotations
 
+import os
+
 import streamlit as st
 
 from app import session
@@ -33,14 +35,8 @@ def render():
                     session.login(user)
                     st.rerun()
 
-            with st.expander("Demo accounts (for the thesis demonstration)"):
-                st.markdown(
-                    "Password for all demo accounts: **`Demo@12345`**\n\n"
-                    "| Role | E-mail |\n|---|---|\n"
-                    "| Admin | `admin@demo.example.com` |\n"
-                    "| Teacher (Data Structures, OOP) | `teacher.a@demo.example.com` |\n"
-                    "| Teacher (Database, Discrete Math) | `teacher.b@demo.example.com` |\n"
-                    "| Student | `student01@demo.example.com` … `student12@demo.example.com` |")
+            if os.getenv("SHOW_DEMO_LOGINS", "true").lower() not in ("false", "0", "no"):
+                _demo_accounts()
 
         with register:
             st.caption("Teachers and administrators are created by an administrator.")
@@ -77,3 +73,14 @@ def render():
                         session.login(user)
                         st.success("Account created.")
                         st.rerun()
+
+
+def _demo_accounts():
+    with st.expander("Demo accounts (for the thesis demonstration)"):
+        st.markdown(
+            f"Password for all demo accounts: **`{os.getenv('DEMO_PASSWORD', 'Demo@12345')}`**\n\n"
+            "| Role | E-mail |\n|---|---|\n"
+            "| Admin | `admin@demo.example.com` |\n"
+            "| Teacher (Data Structures, OOP) | `teacher.a@demo.example.com` |\n"
+            "| Teacher (Database, Discrete Math) | `teacher.b@demo.example.com` |\n"
+            "| Student | `student01@demo.example.com` … `student12@demo.example.com` |")

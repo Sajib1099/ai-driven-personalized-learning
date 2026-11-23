@@ -3,7 +3,8 @@ Database connection.
 
 The database location comes from the DATABASE_URL setting in the .env file:
   - Local development : sqlite:///data/app.db           (default)
-  - Deployment        : postgresql+psycopg://user:password@host:5432/dbname
+  - Deployment        : postgresql://user:password@host:5432/dbname?sslmode=require
+                        (from Neon / Supabase; on Streamlit Cloud put it in the app's Secrets)
 
 Switching from SQLite to PostgreSQL only needs a different DATABASE_URL;
 the models and migrations stay the same.
@@ -27,6 +28,10 @@ DEFAULT_SQLITE = f"sqlite:///{(ROOT / 'data' / 'app.db').as_posix()}"
 
 def get_database_url() -> str:
     url = os.getenv("DATABASE_URL", "").strip() or DEFAULT_SQLITE
+    # Hosting providers give "postgres://" or "postgresql://"; SQLAlchemy needs the driver name (psycopg 3)
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            url = "postgresql+psycopg://" + url[len(prefix):]
     # Relative SQLite paths are resolved from the project folder, not the terminal's folder
     if url.startswith("sqlite:///") and not url.startswith("sqlite:////") and ":" not in url[10:12]:
         url = f"sqlite:///{(ROOT / url[10:]).as_posix()}"

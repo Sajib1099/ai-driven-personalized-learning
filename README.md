@@ -14,7 +14,7 @@ recommendations that use each student's stored learning history.
 - [x] **Stage 4** — Subject-wise teachers (each teacher edits only their own subjects). Teacher portal: class dashboard with attention/risk/engagement flags, AI for the class, student report (performance, SHAP, recommendations, feedback), record scores (single and whole class), assign activities, study targets, notifications
 - [x] **Stage 5–6** — AI and recommendation integration (built into Stages 3–4)
 - [x] **Stage 7** — Admin portal: users (create, disable, reset password), programs/subjects/topics, enrollments, teacher subjects, learning resources with teacher suggestion → admin approval, audit log
-- [ ] Stage 8 — testing and deployment
+- [x] **Stage 8 (ready)** — all checks pass on SQLite and PostgreSQL; automatic migrations and optional demo seed at start-up; deployment steps in `DEPLOYMENT.md`
 
 ## Setup (Windows, VS Code terminal)
 ```powershell

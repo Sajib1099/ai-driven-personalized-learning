@@ -16,6 +16,26 @@ import streamlit as st  # noqa: E402
 
 st.set_page_config(page_title="AI Personalized Learning Platform", page_icon="🎓", layout="wide")
 
+# On Streamlit Cloud, settings come from the app's Secrets: expose them as environment variables
+# before the database module reads DATABASE_URL.
+import os  # noqa: E402
+try:
+    for _k, _v in st.secrets.items():
+        if isinstance(_v, (str, int, float, bool)) and _k not in os.environ:
+            os.environ[_k] = str(_v)
+except Exception:   # no secrets file locally — .env is used instead
+    pass
+
+from db.bootstrap import prepare_database  # noqa: E402
+
+
+@st.cache_resource(show_spinner="Preparing the database…")
+def _prepare():
+    return prepare_database()
+
+
+_prepare()
+
 from app import session  # noqa: E402
 from app.components import ui  # noqa: E402
 from app.views import admin, auth_page, profile, student, teacher  # noqa: E402

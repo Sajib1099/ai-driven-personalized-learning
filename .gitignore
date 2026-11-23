@@ -10,3 +10,6 @@ __pycache__/
 .ipynb_checkpoints/
 .pytest_cache/
 .DS_Store
+
+# Streamlit secrets (database password etc.)
+.streamlit/secrets.toml
