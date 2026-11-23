@@ -1,0 +1,12 @@
+# Secrets and local data — never commit
+.env
+data/
+*.db
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+.DS_Store

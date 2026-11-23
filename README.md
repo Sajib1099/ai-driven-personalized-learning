@@ -1,2 +1,47 @@
-# ai-driven-personalized-learning
-An AI-based personalized learning system for predicting student performance, improving learning outcomes, and supporting education quality through personalized recommendations.
+# AI-Driven Personalized Learning Platform
+
+Undergraduate thesis project — Sajib Sarker, Department of Software Engineering, Daffodil International University.
+
+A database-driven learning platform with Student, Teacher and Admin portals that predicts student
+performance (XGBoost, OULAD), explains predictions (SHAP, LIME) and gives personalised learning
+recommendations that use each student's stored learning history.
+
+## Current status
+- [x] **Stage 1a** — project structure, database schema (21 tables), migrations, ML artifacts verified
+- [x] **Stage 1b** — demo data: `python -m scripts.seed_demo` (12 demo students linked to real OULAD test records + synthetic topic quizzes)
+- [x] **Stage 2** — login, student registration, roles (student/teacher/admin), profile & password change, account lockout, access rules
+- [ ] Stage 3 — Student portal
+- [ ] Stage 4 — Teacher portal
+- [ ] Stage 5–6 — AI and recommendation integration
+- [ ] Stage 7 — Admin portal
+- [ ] Stage 8 — testing and deployment
+
+## Setup (Windows, VS Code terminal)
+```powershell
+py -3.12 -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+alembic upgrade head          # creates the database tables
+python -m scripts.check_stage1
+python -m scripts.seed_demo   # adds demo accounts and data (use --reset to rebuild)
+python -m scripts.check_stage2
+streamlit run app/main.py     # open the platform
+```
+
+Known limitation: refreshing the browser page (F5) signs the user out (Streamlit keeps login per browser session).
+
+## Folder structure
+```
+app/            Streamlit pages and UI components (Stage 2+)
+services/       business logic: prediction, explainability, recommendations, auth
+db/             database models (models.py) and connection (session.py)
+migrations/     Alembic database migrations
+ml_artifacts/   trained model and files exported by the notebook
+notebooks/      OULAD_Thesis_Final.ipynb (data → model → SHAP/LIME → export)
+scripts/        setup and verification scripts
+data/           local SQLite database (not uploaded to GitHub)
+```
+
+## Model
+Leakage-free XGBoost, 37 features, OULAD. Test accuracy 73.02%, macro F1 0.669, ROC-AUC 0.919.
+It is a retrospective (full-module) model, not an early-warning model.

@@ -1,0 +1,10 @@
+Feature set,Model,Val Accuracy (%),Test Accuracy (%),Test Precision (macro),Test Recall (macro),Test F1 (macro),Test F1 (weighted),Test ROC-AUC (OvR macro)
+full40,Logistic Regression,86.0,85.36,0.8442,0.7854,0.8069,0.8487,0.9589
+full40,Random Forest,85.54,84.72,0.8203,0.8353,0.8252,0.85,0.9645
+full40,XGBoost,87.14,85.93,0.8491,0.7972,0.8171,0.8555,0.9676
+clean37,Logistic Regression,72.79,71.81,0.6867,0.6405,0.6514,0.7013,0.9086
+clean37,Random Forest,72.79,71.11,0.6655,0.6837,0.6687,0.7038,0.9148
+clean37,XGBoost,74.29,73.02,0.6998,0.6596,0.6694,0.7158,0.9194
+clean38,Logistic Regression,73.02,71.63,0.684,0.6381,0.6489,0.6994,0.9089
+clean38,Random Forest,72.86,71.04,0.6643,0.6845,0.6678,0.7029,0.9152
+clean38,XGBoost,74.11,72.77,0.6965,0.6577,0.6675,0.7138,0.9202

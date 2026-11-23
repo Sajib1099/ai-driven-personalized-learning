@@ -1,0 +1,19 @@
+# --- ML (versions must match the Colab environment the model files were saved in) ---
+scikit-learn==1.6.1
+xgboost==3.4.1
+pandas==2.2.3
+numpy>=2.0,<2.5
+shap==0.54.1
+lime==0.2.0.1
+joblib>=1.3
+
+# --- Web app ---
+streamlit>=1.50
+plotly>=5.24
+
+# --- Database and security ---
+SQLAlchemy>=2.0,<2.1
+alembic>=1.13
+bcrypt>=4.1
+python-dotenv>=1.0
+# For PostgreSQL deployment later: psycopg[binary]>=3.2

@@ -1,0 +1,420 @@
+{
+  "feature_set": "clean37",
+  "model_type": "XGBoost",
+  "features": [
+    "code_module",
+    "code_presentation",
+    "avg_score",
+    "max_score",
+    "min_score",
+    "score_std",
+    "assessment_count",
+    "avg_weight",
+    "total_weight",
+    "avg_submission_day",
+    "total_clicks",
+    "active_days",
+    "learning_sites",
+    "avg_clicks_per_record",
+    "max_clicks_per_record",
+    "gender",
+    "region",
+    "highest_education",
+    "imd_band",
+    "age_band",
+    "num_of_prev_attempts",
+    "studied_credits",
+    "disability",
+    "tma_avg_score",
+    "tma_max_score",
+    "tma_min_score",
+    "tma_count",
+    "cma_avg_score",
+    "cma_max_score",
+    "cma_min_score",
+    "cma_count",
+    "tma_score_range",
+    "cma_score_range",
+    "continuous_avg_score",
+    "clicks_per_active_day",
+    "sites_per_active_day",
+    "click_consistency"
+  ],
+  "categorical_features": [
+    "code_module",
+    "code_presentation",
+    "gender",
+    "region",
+    "highest_education",
+    "imd_band",
+    "age_band",
+    "disability"
+  ],
+  "numerical_features": [
+    "avg_score",
+    "max_score",
+    "min_score",
+    "score_std",
+    "assessment_count",
+    "avg_weight",
+    "total_weight",
+    "avg_submission_day",
+    "total_clicks",
+    "active_days",
+    "learning_sites",
+    "avg_clicks_per_record",
+    "max_clicks_per_record",
+    "num_of_prev_attempts",
+    "studied_credits",
+    "tma_avg_score",
+    "tma_max_score",
+    "tma_min_score",
+    "tma_count",
+    "cma_avg_score",
+    "cma_max_score",
+    "cma_min_score",
+    "cma_count",
+    "tma_score_range",
+    "cma_score_range",
+    "continuous_avg_score",
+    "clicks_per_active_day",
+    "sites_per_active_day",
+    "click_consistency"
+  ],
+  "excluded_leakage_features": [
+    "has_unregistration",
+    "registration_duration"
+  ],
+  "classes": [
+    "Distinction",
+    "Fail",
+    "Pass",
+    "Withdrawn"
+  ],
+  "n_encoded_features": 76,
+  "encoded_to_raw": {
+    "cat__code_module_AAA": "code_module",
+    "cat__code_module_BBB": "code_module",
+    "cat__code_module_CCC": "code_module",
+    "cat__code_module_DDD": "code_module",
+    "cat__code_module_EEE": "code_module",
+    "cat__code_module_FFF": "code_module",
+    "cat__code_module_GGG": "code_module",
+    "cat__code_presentation_2013B": "code_presentation",
+    "cat__code_presentation_2013J": "code_presentation",
+    "cat__code_presentation_2014B": "code_presentation",
+    "cat__code_presentation_2014J": "code_presentation",
+    "cat__gender_F": "gender",
+    "cat__gender_M": "gender",
+    "cat__region_East Anglian Region": "region",
+    "cat__region_East Midlands Region": "region",
+    "cat__region_Ireland": "region",
+    "cat__region_London Region": "region",
+    "cat__region_North Region": "region",
+    "cat__region_North Western Region": "region",
+    "cat__region_Scotland": "region",
+    "cat__region_South East Region": "region",
+    "cat__region_South Region": "region",
+    "cat__region_South West Region": "region",
+    "cat__region_Wales": "region",
+    "cat__region_West Midlands Region": "region",
+    "cat__region_Yorkshire Region": "region",
+    "cat__highest_education_A Level or Equivalent": "highest_education",
+    "cat__highest_education_HE Qualification": "highest_education",
+    "cat__highest_education_Lower Than A Level": "highest_education",
+    "cat__highest_education_No Formal quals": "highest_education",
+    "cat__highest_education_Post Graduate Qualification": "highest_education",
+    "cat__imd_band_0-10%": "imd_band",
+    "cat__imd_band_10-20": "imd_band",
+    "cat__imd_band_20-30%": "imd_band",
+    "cat__imd_band_30-40%": "imd_band",
+    "cat__imd_band_40-50%": "imd_band",
+    "cat__imd_band_50-60%": "imd_band",
+    "cat__imd_band_60-70%": "imd_band",
+    "cat__imd_band_70-80%": "imd_band",
+    "cat__imd_band_80-90%": "imd_band",
+    "cat__imd_band_90-100%": "imd_band",
+    "cat__imd_band_?": "imd_band",
+    "cat__age_band_0-35": "age_band",
+    "cat__age_band_35-55": "age_band",
+    "cat__age_band_55<=": "age_band",
+    "cat__disability_N": "disability",
+    "cat__disability_Y": "disability",
+    "num__avg_score": "avg_score",
+    "num__max_score": "max_score",
+    "num__min_score": "min_score",
+    "num__score_std": "score_std",
+    "num__assessment_count": "assessment_count",
+    "num__avg_weight": "avg_weight",
+    "num__total_weight": "total_weight",
+    "num__avg_submission_day": "avg_submission_day",
+    "num__total_clicks": "total_clicks",
+    "num__active_days": "active_days",
+    "num__learning_sites": "learning_sites",
+    "num__avg_clicks_per_record": "avg_clicks_per_record",
+    "num__max_clicks_per_record": "max_clicks_per_record",
+    "num__num_of_prev_attempts": "num_of_prev_attempts",
+    "num__studied_credits": "studied_credits",
+    "num__tma_avg_score": "tma_avg_score",
+    "num__tma_max_score": "tma_max_score",
+    "num__tma_min_score": "tma_min_score",
+    "num__tma_count": "tma_count",
+    "num__cma_avg_score": "cma_avg_score",
+    "num__cma_max_score": "cma_max_score",
+    "num__cma_min_score": "cma_min_score",
+    "num__cma_count": "cma_count",
+    "num__tma_score_range": "tma_score_range",
+    "num__cma_score_range": "cma_score_range",
+    "num__continuous_avg_score": "continuous_avg_score",
+    "num__clicks_per_active_day": "clicks_per_active_day",
+    "num__sites_per_active_day": "sites_per_active_day",
+    "num__click_consistency": "click_consistency"
+  },
+  "hyperparameters": {
+    "max_depth": 4,
+    "learning_rate": 0.05,
+    "n_estimators": 300,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8
+  },
+  "metrics": {
+    "Val Accuracy (%)": 74.29,
+    "Test Accuracy (%)": 73.02,
+    "Test Precision (macro)": 0.6998,
+    "Test Recall (macro)": 0.6596,
+    "Test F1 (macro)": 0.6694,
+    "Test F1 (weighted)": 0.7158,
+    "Test ROC-AUC (OvR macro)": 0.9194
+  },
+  "category_options": {
+    "code_module": [
+      "AAA",
+      "BBB",
+      "CCC",
+      "DDD",
+      "EEE",
+      "FFF",
+      "GGG"
+    ],
+    "code_presentation": [
+      "2013B",
+      "2013J",
+      "2014B",
+      "2014J"
+    ],
+    "gender": [
+      "F",
+      "M"
+    ],
+    "region": [
+      "East Anglian Region",
+      "East Midlands Region",
+      "Ireland",
+      "London Region",
+      "North Region",
+      "North Western Region",
+      "Scotland",
+      "South East Region",
+      "South Region",
+      "South West Region",
+      "Wales",
+      "West Midlands Region",
+      "Yorkshire Region"
+    ],
+    "highest_education": [
+      "A Level or Equivalent",
+      "HE Qualification",
+      "Lower Than A Level",
+      "No Formal quals",
+      "Post Graduate Qualification"
+    ],
+    "imd_band": [
+      "0-10%",
+      "10-20",
+      "20-30%",
+      "30-40%",
+      "40-50%",
+      "50-60%",
+      "60-70%",
+      "70-80%",
+      "80-90%",
+      "90-100%",
+      "?"
+    ],
+    "age_band": [
+      "0-35",
+      "35-55",
+      "55<="
+    ],
+    "disability": [
+      "N",
+      "Y"
+    ]
+  },
+  "numeric_ranges": {
+    "avg_score": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 73.33333333333333
+    },
+    "max_score": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 90.0
+    },
+    "min_score": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 56.0
+    },
+    "score_std": {
+      "min": 0.0,
+      "max": 70.0035713374682,
+      "median": 9.770290954462507
+    },
+    "assessment_count": {
+      "min": 0.0,
+      "max": 14.0,
+      "median": 5.0
+    },
+    "avg_weight": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 9.090909090909092
+    },
+    "total_weight": {
+      "min": 0.0,
+      "max": 200.0,
+      "median": 82.0
+    },
+    "avg_submission_day": {
+      "min": -4.0,
+      "max": 351.6,
+      "median": 103.8
+    },
+    "total_clicks": {
+      "min": 0.0,
+      "max": 24139.0,
+      "median": 739.0
+    },
+    "active_days": {
+      "min": 0.0,
+      "max": 285.0,
+      "median": 47.0
+    },
+    "learning_sites": {
+      "min": 0.0,
+      "max": 403.0,
+      "median": 51.0
+    },
+    "avg_clicks_per_record": {
+      "min": 0.0,
+      "max": 20.028933092224232,
+      "median": 3.0837054238842265
+    },
+    "max_clicks_per_record": {
+      "min": 0.0,
+      "max": 6977.0,
+      "median": 34.0
+    },
+    "num_of_prev_attempts": {
+      "min": 0.0,
+      "max": 6.0,
+      "median": 0.0
+    },
+    "studied_credits": {
+      "min": 30.0,
+      "max": 630.0,
+      "median": 60.0
+    },
+    "tma_avg_score": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 70.0
+    },
+    "tma_max_score": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 80.0
+    },
+    "tma_min_score": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 59.0
+    },
+    "tma_count": {
+      "min": 0.0,
+      "max": 6.0,
+      "median": 4.0
+    },
+    "cma_avg_score": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 33.0
+    },
+    "cma_max_score": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 40.0
+    },
+    "cma_min_score": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 19.0
+    },
+    "cma_count": {
+      "min": 0.0,
+      "max": 7.0,
+      "median": 1.0
+    },
+    "tma_score_range": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 14.0
+    },
+    "cma_score_range": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 0.0
+    },
+    "continuous_avg_score": {
+      "min": 0.0,
+      "max": 100.0,
+      "median": 45.31666666666666
+    },
+    "clicks_per_active_day": {
+      "min": 0.0,
+      "max": 141.0,
+      "median": 16.426785714285714
+    },
+    "sites_per_active_day": {
+      "min": 0.0,
+      "max": 34.0,
+      "median": 1.2387211668928086
+    },
+    "click_consistency": {
+      "min": 0.0,
+      "max": 1.0,
+      "median": 0.09054705242390794
+    }
+  },
+  "dataset": {
+    "rows": 29278,
+    "train": 20494,
+    "validation": 4392,
+    "test": 4392,
+    "class_distribution": {
+      "Pass": 12360,
+      "Withdrawn": 7188,
+      "Fail": 6706,
+      "Distinction": 3024
+    }
+  },
+  "versions": {
+    "xgboost": "3.4.1",
+    "scikit-learn": "1.6.1",
+    "pandas": "2.2.3",
+    "numpy": "2.4.6",
+    "shap": "0.54.1"
+  }
+}
