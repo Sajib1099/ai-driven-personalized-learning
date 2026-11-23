@@ -303,13 +303,18 @@ def build_study_plan(student_id: int, mastery: pd.DataFrame | None = None,
 
 
 def current_study_plan(student_id: int) -> pd.DataFrame:
+    """Active plan, one row per subject. A teacher-set target overrides the system suggestion."""
     with get_session() as s:
         rows = s.execute(select(Subject.subject_name, StudyPlan.priority, StudyPlan.target_minutes_per_day,
-                                StudyPlan.start_date, StudyPlan.created_by)
+                                StudyPlan.start_date, StudyPlan.end_date, StudyPlan.created_by)
                          .join(Subject, Subject.id == StudyPlan.subject_id)
-                         .where(StudyPlan.student_id == student_id, StudyPlan.progress_status == "active")
-                         .order_by(StudyPlan.target_minutes_per_day.desc())).all()
-    return pd.DataFrame([r._mapping for r in rows])
+                         .where(StudyPlan.student_id == student_id, StudyPlan.progress_status == "active")).all()
+    df = pd.DataFrame([r._mapping for r in rows])
+    if df.empty:
+        return df
+    df["_rank"] = (df["created_by"] == "teacher").astype(int)
+    df = df.sort_values("_rank", ascending=False).drop_duplicates("subject_name").drop(columns="_rank")
+    return df.sort_values("target_minutes_per_day", ascending=False).reset_index(drop=True)
 
 
 # =============================================================================

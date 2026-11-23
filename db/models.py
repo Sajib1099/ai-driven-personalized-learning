@@ -142,11 +142,18 @@ class Enrollment(TimestampMixin, Base):
 
 
 class TeacherAssignment(TimestampMixin, Base):
-    """A teacher may only see students they are assigned to (directly or through a course)."""
+    """
+    What a teacher is responsible for. One row = one of:
+      subject_id : teaches this subject (sees students enrolled in its program, edits only this subject)
+      course_id  : responsible for the whole program (all its subjects)
+      student_id : advisor for one student (all of that student's subjects)
+    """
     __tablename__ = "teacher_assignments"
     __table_args__ = (
-        CheckConstraint("student_id IS NOT NULL OR course_id IS NOT NULL", name="ck_assignment_target"),
+        CheckConstraint("student_id IS NOT NULL OR course_id IS NOT NULL OR subject_id IS NOT NULL",
+                        name="ck_assignment_target_v2"),
         UniqueConstraint("teacher_id", "student_id", "course_id"),
+        UniqueConstraint("teacher_id", "subject_id", name="uq_teacher_subject"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -154,6 +161,7 @@ class TeacherAssignment(TimestampMixin, Base):
     student_id: Mapped[int | None] = mapped_column(ForeignKey("student_profiles.id", ondelete="CASCADE"),
                                                    index=True)
     course_id: Mapped[int | None] = mapped_column(ForeignKey("courses.id", ondelete="CASCADE"), index=True)
+    subject_id: Mapped[int | None] = mapped_column(ForeignKey("subjects.id", ondelete="CASCADE"), index=True)
 
 
 # ============================================================================

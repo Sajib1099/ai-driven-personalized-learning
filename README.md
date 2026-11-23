@@ -11,7 +11,7 @@ recommendations that use each student's stored learning history.
 - [x] **Stage 1b** — demo data: `python -m scripts.seed_demo` (12 demo students linked to real OULAD test records + synthetic topic quizzes)
 - [x] **Stage 2** — login, student registration, roles (student/teacher/admin), profile & password change, account lockout, access rules
 - [x] **Stage 3** — Student portal: dashboard, topic mastery, history-aware recommendations (start/complete/skip), study plan, AI prediction with SHAP and LIME
-- [ ] Stage 4 — Teacher portal
+- [x] **Stage 4** — Subject-wise teachers (each teacher edits only their own subjects). Teacher portal: class dashboard with attention/risk/engagement flags, AI for the class, student report (performance, SHAP, recommendations, feedback), record scores (single and whole class), assign activities, study targets, notifications
 - [ ] Stage 5–6 — AI and recommendation integration
 - [ ] Stage 7 — Admin portal
 - [ ] Stage 8 — testing and deployment
@@ -26,6 +26,7 @@ python -m scripts.check_stage1
 python -m scripts.seed_demo   # adds demo accounts and data (use --reset to rebuild)
 python -m scripts.check_stage2
 python -m scripts.check_stage3
+python -m scripts.check_stage4
 streamlit run app/main.py     # open the platform
 ```
 

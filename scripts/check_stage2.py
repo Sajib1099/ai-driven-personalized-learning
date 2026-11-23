@@ -10,9 +10,10 @@ import sys
 
 from sqlalchemy import delete, select
 
-from db.models import StudentProfile, User
+from db.models import StudentProfile, Subject, TeacherProfile, User
 from db.session import get_session
-from services.access import can_view_student, student_profile_id, teacher_profile_id, teacher_student_ids
+from services.access import (can_edit_subject, can_view_student, student_profile_id, teacher_profile_id,
+                             teacher_student_ids)
 from services.auth import AuthError, authenticate, hash_password, register_student
 
 DEMO_PW = "Demo@12345"
@@ -82,7 +83,8 @@ try:
     print("\n=== Data access rules ===")
     with get_session() as s:
         codes = dict(s.execute(select(StudentProfile.student_code, StudentProfile.id)).all())
-    s1, s2, s12 = codes["DEMO-0001"], codes["DEMO-0002"], codes["DEMO-0012"]
+        subj = dict(s.execute(select(Subject.subject_code, Subject.id)).all())
+    s1, s2 = codes["DEMO-0001"], codes["DEMO-0002"]
     student1 = authenticate("student01@demo.example.com", DEMO_PW)
     teacher_a = authenticate("teacher.a@demo.example.com", DEMO_PW)
     teacher_b = authenticate("teacher.b@demo.example.com", DEMO_PW)
@@ -90,11 +92,29 @@ try:
     check(student_profile_id(student1.id) == s1, "student01 is linked to DEMO-0001")
     check(can_view_student(student1, s1) and not can_view_student(student1, s2),
           "A student can see only their own data")
-    check(len(teacher_student_ids(teacher_profile_id(teacher_a.id))) == 12, "Teacher A sees all 12 course students")
-    check(len(teacher_student_ids(teacher_profile_id(teacher_b.id))) == 5, "Teacher B sees only 5 assigned students")
-    check(can_view_student(teacher_b, s1) and not can_view_student(teacher_b, s12),
-          "Teacher B cannot see a student who is not assigned")
-    check(can_view_student(admin, s12), "Admin can see every student")
+    check(len(teacher_student_ids(teacher_profile_id(teacher_a.id))) == 12 and
+          len(teacher_student_ids(teacher_profile_id(teacher_b.id))) == 12,
+          "Both subject teachers see the 12 students enrolled in their program")
+    check(can_edit_subject(teacher_a, s1, subj["DEMO-DS"]) and not can_edit_subject(teacher_a, s1, subj["DEMO-DB"]),
+          "Teacher A can edit Data Structures but not Database Systems")
+    check(can_edit_subject(teacher_b, s1, subj["DEMO-DB"]) and not can_edit_subject(teacher_b, s1, subj["DEMO-OOP"]),
+          "Teacher B can edit Database Systems but not OOP")
+    check(not can_edit_subject(student1, s1, subj["DEMO-DS"]), "A student cannot edit scores, even their own")
+
+    # a teacher with no assignments and a student in no program
+    with get_session() as s:
+        tu = User(full_name="Unassigned Teacher", email=f"teacher{TMP}", password_hash=hash_password("Abcdef12"),
+                  role="teacher")
+        s.add(tu)
+        s.flush()
+        s.add(TeacherProfile(user_id=tu.id))
+    lonely = register_student("Lonely Student", f"lonely{TMP}", "Abcdef12", "TEST-LONELY")
+    t_none = authenticate(f"teacher{TMP}", "Abcdef12")
+    lonely_id = student_profile_id(lonely.id)
+    check(len(teacher_student_ids(teacher_profile_id(t_none.id))) == 0 and not can_view_student(t_none, s1),
+          "A teacher with no assigned subjects sees no students")
+    check(not can_view_student(teacher_a, lonely_id), "A teacher cannot see a student outside their programs")
+    check(can_view_student(admin, lonely_id), "Admin can see every student")
 finally:
     cleanup()
 

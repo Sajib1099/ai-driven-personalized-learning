@@ -6,8 +6,9 @@ Run from the project folder:
     python -m scripts.seed_demo --reset    # delete all demo data, then add it again
 
 What it creates
-  - 1 admin, 2 teachers, 12 demo students (all e-mails end with @demo.example.com)
-  - 1 example course with 4 subjects and their topics (any course can be added later)
+  - 1 admin, 2 subject teachers, 12 demo students (all e-mails end with @demo.example.com)
+  - 1 example program with 4 subjects and their topics (any program can be added later)
+  - Teacher A teaches Data Structures + OOP, Teacher B teaches Database Systems + Discrete Mathematics
   - Layer A: each demo student is linked to one REAL record from the held-out OULAD
     test set (3 students per actual outcome). These records were never used for training.
   - Layer B: SYNTHETIC topic quiz scores (2 rounds) so the subject-level features can be
@@ -54,6 +55,7 @@ SUBJECTS = [
      ["Sets and Logic", "Relations and Functions", "Graph Theory", "Combinatorics"]),
 ]
 
+SUBJECT_TEACHERS = {"teacher.a": ["DEMO-DS", "DEMO-OOP"], "teacher.b": ["DEMO-DB", "DEMO-DM"]}
 STUDENTS_PER_OUTCOME = 3
 OUTCOME_BASE = {"Distinction": 82, "Pass": 68, "Fail": 50, "Withdrawn": 45}   # synthetic score levels
 QUIZ_ROUNDS = [("Quiz 1", date(2026, 10, 5)), ("Quiz 2", date(2026, 11, 9))]
@@ -154,14 +156,17 @@ def seed():
                             maximum_score=QUIZ_MAX, assessment_date=quiz_date, recorded_by=teachers[0].user_id))
 
         s.flush()
-        # ---------------- Teacher access: A -> whole course, B -> first 5 students only
-        if not s.scalar(select(TeacherAssignment).where(TeacherAssignment.teacher_id == teachers[0].id)):
-            s.add(TeacherAssignment(teacher_id=teachers[0].id, course_id=course.id))
-        if not s.scalar(select(TeacherAssignment).where(TeacherAssignment.teacher_id == teachers[1].id)):
-            first_five = s.scalars(select(StudentProfile).where(StudentProfile.is_demo.is_(True))
-                                   .order_by(StudentProfile.student_code).limit(5)).all()
-            for sp in first_five:
-                s.add(TeacherAssignment(teacher_id=teachers[1].id, student_id=sp.id))
+        # ---------------- Subject-wise teachers: A teaches DS + OOP, B teaches DB + DM
+        # (older demo databases used course/student assignments — those are replaced)
+        for teacher, codes in zip(teachers, SUBJECT_TEACHERS.values()):
+            s.execute(delete(TeacherAssignment).where(TeacherAssignment.teacher_id == teacher.id,
+                                                      TeacherAssignment.subject_id.is_(None)))
+            for code in codes:
+                subj_id = s.scalar(select(Subject.id).where(Subject.subject_code == code))
+                exists = s.scalar(select(TeacherAssignment.id).where(TeacherAssignment.teacher_id == teacher.id,
+                                                                     TeacherAssignment.subject_id == subj_id))
+                if not exists:
+                    s.add(TeacherAssignment(teacher_id=teacher.id, subject_id=subj_id))
 
 
 def summary():
@@ -191,8 +196,8 @@ def summary():
 
     print("\nDemo logins (password for all: " + DEMO_PASSWORD + ")")
     print(f"  admin{DEMO_DOMAIN}")
-    print(f"  teacher.a{DEMO_DOMAIN}   (sees the whole course)")
-    print(f"  teacher.b{DEMO_DOMAIN}   (sees 5 assigned students only)")
+    print(f"  teacher.a{DEMO_DOMAIN}   (teaches Data Structures + Object-Oriented Programming)")
+    print(f"  teacher.b{DEMO_DOMAIN}   (teaches Database Systems + Discrete Mathematics)")
     print(f"  student01{DEMO_DOMAIN} ... student12{DEMO_DOMAIN}")
     print("Login pages are added in Stage 2.")
 

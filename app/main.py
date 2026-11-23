@@ -18,7 +18,7 @@ st.set_page_config(page_title="AI Personalized Learning Platform", page_icon="�
 
 from app import session  # noqa: E402
 from app.components import ui  # noqa: E402
-from app.views import auth_page, home, profile, student  # noqa: E402
+from app.views import auth_page, home, profile, student, teacher  # noqa: E402
 
 ui.inject_css()
 user = session.current_user()
@@ -37,11 +37,15 @@ PAGES = {
                 st.Page(student.study_plan, title="Study Plan", icon="🗓️", url_path="study-plan"),
                 st.Page(student.ai_prediction, title="AI Prediction", icon="🤖", url_path="ai-prediction"),
                 profile_page],
-    "teacher": [st.Page(home.teacher_home, title="Dashboard", icon="🏠", url_path="teacher", default=True),
+    "teacher": [st.Page(teacher.dashboard, title="Class Dashboard", icon="🏠", url_path="teacher", default=True),
+                st.Page(teacher.student_detail, title="Student Detail", icon="🧑‍🎓", url_path="student-detail"),
+                st.Page(teacher.record_scores, title="Record Class Scores", icon="📝", url_path="record-scores"),
                 profile_page],
     "admin": [st.Page(home.admin_home, title="Dashboard", icon="🏠", url_path="admin", default=True),
               profile_page],
 }
+if user.role == "teacher":
+    teacher.PAGES["detail"] = PAGES["teacher"][1]
 nav = st.navigation(PAGES[user.role])
 
 with st.sidebar:

@@ -26,7 +26,7 @@ def student_home():
                 "scores are synthetic demonstration data.")
     k = st.columns(4)
     ui.kpi(k[0], "Student ID", p["student_code"])
-    ui.kpi(k[1], "Enrolled courses", str(p["courses"]))
+    ui.kpi(k[1], "Enrolled programs", str(p["courses"]))
     ui.kpi(k[2], "Recorded assessments", str(p["assessments"]))
     ui.kpi(k[3], "AI prediction data", "Available" if p["has_module_record"] else "Not available",
            "Module activity record" if p["has_module_record"] else "Requires module activity data")
@@ -49,22 +49,22 @@ def teacher_home():
     st.markdown("#### Your students")
     rows = students_by_ids(ids)
     if not rows:
-        st.info("No students are assigned to you yet. An administrator can assign students or courses.")
+        st.info("No students are assigned to you yet. An administrator can assign you subjects.")
         return
     df = pd.DataFrame(rows).rename(columns={"student_code": "Student ID", "full_name": "Name",
                                             "program": "Program", "semester": "Semester", "is_demo": "Demo"})
     st.dataframe(df.drop(columns=["id"]), hide_index=True, width="stretch")
-    st.caption("You can only see students assigned to you directly or through your courses.")
+    st.caption("You can only see students enrolled in programs where you teach a subject.")
 
 
 def admin_home():
     session.require_role("admin")
-    ui.hero("Administration", "Manage users, courses, subjects and learning resources.", tag="Admin portal")
+    ui.hero("Administration", "Manage users, programs, subjects and learning resources.", tag="Admin portal")
     c = system_counts()
     k = st.columns(4)
     ui.kpi(k[0], "Students", str(c["students"]))
     ui.kpi(k[1], "Teachers", str(c["teachers"]))
-    ui.kpi(k[2], "Courses / subjects", f'{c["courses"]} / {c["subjects"]}')
+    ui.kpi(k[2], "Programs / subjects", f'{c["courses"]} / {c["subjects"]}')
     ui.kpi(k[3], "Topics", str(c["topics"]))
     st.write("")
-    st.caption("User, course, subject, resource and assignment management are added in Stage 7.")
+    st.caption("User, program, subject, resource and teacher-assignment management are added in the next stage.")

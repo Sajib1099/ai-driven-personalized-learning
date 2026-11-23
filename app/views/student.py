@@ -6,12 +6,12 @@ import streamlit as st
 
 from app import session
 from app.components import ui
-from services import ai_service, learning
+from services import ai_service, learning, teaching
 from services.access import student_profile_id
 from services.overview import student_profile
 
 SOURCE_LABEL = {"subject_rules": "Subject progress", "ai_module": "AI prediction", "teacher": "Teacher"}
-TYPE_ICON = {"revision": "📘", "practice": "✏️", "enrichment": "🚀", "alternative": "🔄"}
+TYPE_ICON = {"revision": "📘", "practice": "✏️", "enrichment": "🚀", "alternative": "🔄", "teacher_activity": "🧑‍🏫"}
 STATUS_STYLE = {"pending": ("#f0efec", "#52514e", "Not started"), "started": ("#e3eefc", "#1c5cab", "In progress"),
                 "completed": ("#dff3df", "#006300", "✓ Completed"), "skipped": ("#f0efec", "#898781", "Skipped")}
 
@@ -61,6 +61,17 @@ def dashboard():
     ui.hero(f"Welcome back, {user.full_name}",
             "Your progress, strengths, weaknesses and next steps in one place.", tag="Student portal")
     _demo_notice(profile)
+
+    notes = teaching.notifications_for(user.id)
+    if notes:
+        with st.container(border=True):
+            c1, c2 = st.columns([4, 1])
+            c1.markdown(f"**🔔 {len(notes)} new update{'s' if len(notes) > 1 else ''}**")
+            if c2.button("Mark as read", width="stretch"):
+                teaching.mark_notifications_read(user.id)
+                st.rerun()
+            for n in notes:
+                st.markdown(f"- **{ui.esc(n['title'])}** — {ui.esc(n['message'])}")
 
     k = st.columns(4)
     ui.kpi(k[0], "Overall mastery", f"{mastery['mastery'].mean():.0f}%" if len(mastery) else "—",
@@ -300,7 +311,9 @@ def study_plan():
     c1, c2 = st.columns([1.2, 1], gap="large")
     with c1:
         show = pd.DataFrame({"Subject": plan["subject_name"], "Priority": plan["priority"].str.title(),
-                             "Suggested time": plan["target_minutes_per_day"].map(lambda m: f"{m} min/day")})
+                             "Time": plan["target_minutes_per_day"].map(lambda m: f"{m} min/day"),
+                             "Set by": plan["created_by"].map({"system": "System suggestion",
+                                                               "teacher": "Your teacher"})})
         st.dataframe(show, hide_index=True, width="stretch")
         st.caption(f"Total ≈ {total} minutes per day. Subjects with more weak topics get more time; every subject "
                    f"keeps some revision time. These are suggestions — adjust them to your timetable.")

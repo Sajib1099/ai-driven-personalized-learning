@@ -38,8 +38,8 @@ def render():
                     "Password for all demo accounts: **`Demo@12345`**\n\n"
                     "| Role | E-mail |\n|---|---|\n"
                     "| Admin | `admin@demo.example.com` |\n"
-                    "| Teacher (whole course) | `teacher.a@demo.example.com` |\n"
-                    "| Teacher (5 students) | `teacher.b@demo.example.com` |\n"
+                    "| Teacher (Data Structures, OOP) | `teacher.a@demo.example.com` |\n"
+                    "| Teacher (Database, Discrete Math) | `teacher.b@demo.example.com` |\n"
                     "| Student | `student01@demo.example.com` … `student12@demo.example.com` |")
 
         with register:
