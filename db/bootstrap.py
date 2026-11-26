@@ -38,8 +38,27 @@ def seed_if_empty() -> bool:
     return True
 
 
+def upgrade_demo_data() -> bool:
+    """Older demo databases stored every topic as its own 20-mark quiz. If such data is found,
+    rebuild only the demo accounts and the demo program (real accounts are never touched)."""
+    if os.getenv("SEED_DEMO_ON_EMPTY", "false").strip().lower() not in ("1", "true", "yes"):
+        return False
+    from db.models import Assessment
+    from db.session import get_session
+    with get_session() as s:
+        old = s.scalar(select(func.count()).select_from(Assessment).where(
+            Assessment.assessment_name.like("%[SYNTHETIC DEMO DATA]%"),
+            Assessment.assessment_name.not_like("%marks):%")))
+    if not old:
+        return False
+    from scripts import seed_demo
+    seed_demo.reset_demo()
+    seed_demo.seed()
+    return True
+
+
 def prepare_database() -> dict:
     migrate()
     from db.session import engine
-    seeded = seed_if_empty()
+    seeded = seed_if_empty() or upgrade_demo_data()
     return {"tables": len(inspect(engine).get_table_names()), "seeded": seeded}

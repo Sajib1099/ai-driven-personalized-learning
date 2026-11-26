@@ -20,6 +20,8 @@ The ML model is NOT retrained by any of this.
 """
 from __future__ import annotations
 
+import threading
+
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
@@ -73,9 +75,34 @@ def assessments_frame(student_id: int) -> pd.DataFrame:
     return df
 
 
-def topic_mastery(student_id: int) -> pd.DataFrame:
-    """One row per (subject, topic): attempts, first %, latest %, mastery %, trend, level."""
-    df = assessments_frame(student_id)
+def assessments_frame_many(student_ids) -> pd.DataFrame:
+    """Assessments of several students in one query (adds a student_id column)."""
+    ids = list(student_ids)
+    if not ids:
+        return pd.DataFrame()
+    with get_session() as s:
+        rows = s.execute(
+            select(Assessment.student_id, Assessment.id, Assessment.assessment_date, Assessment.assessment_name,
+                   Assessment.assessment_type, Assessment.score, Assessment.maximum_score, Assessment.created_at,
+                   Subject.id.label("subject_id"), Subject.subject_name,
+                   Topic.id.label("topic_id"), Topic.topic_name, Topic.order_index)
+            .join(Subject, Subject.id == Assessment.subject_id)
+            .outerjoin(Topic, Topic.id == Assessment.topic_id)
+            .where(Assessment.student_id.in_(ids))
+            .order_by(Assessment.assessment_date, Assessment.id)).all()
+    df = pd.DataFrame([r._mapping for r in rows])
+    if df.empty:
+        return df
+    df["pct"] = df["score"] / df["maximum_score"] * 100
+    df["topic_name"] = df["topic_name"].fillna("General")
+    return df
+
+
+def topic_mastery(student_id: int, frame: pd.DataFrame | None = None) -> pd.DataFrame:
+    """One row per (subject, topic): attempts, first %, latest %, mastery %, trend, level.
+
+    `frame` may be a pre-loaded assessments frame for this student (see assessments_frame_many)."""
+    df = assessments_frame(student_id) if frame is None else frame
     if df.empty:
         return pd.DataFrame(columns=["subject_id", "subject_name", "topic_id", "topic_name", "attempts",
                                      "first_pct", "latest_pct", "mastery", "trend", "level", "last_date"])
@@ -176,8 +203,50 @@ def _create(s, student_id: int, row: dict, kind: str, priority: str, reason: str
     return rec
 
 
+_LOCKS: dict[int, threading.Lock] = {}
+_LOCKS_GUARD = threading.Lock()
+
+
+def _student_lock(student_id: int) -> threading.Lock:
+    with _LOCKS_GUARD:
+        return _LOCKS.setdefault(student_id, threading.Lock())
+
+
+def _remove_duplicates(s, student_id: int) -> int:
+    """Keep one active rule-based recommendation per topic (the one the student acted on, else the newest)."""
+    recs = s.scalars(select(Recommendation).where(
+        Recommendation.student_id == student_id, Recommendation.source == "subject_rules",
+        Recommendation.is_active.is_(True)).order_by(Recommendation.id.desc())).all()
+    acted = set(s.scalars(select(RecommendationProgress.recommendation_id).where(
+        RecommendationProgress.student_id == student_id, RecommendationProgress.status != "pending")))
+    by_topic: dict = {}
+    for r in recs:
+        by_topic.setdefault(r.topic_id, []).append(r)
+    removed = 0
+    for group in by_topic.values():
+        if len(group) < 2:
+            continue
+        keep = next((r for r in group if r.id in acted), group[0])
+        for r in group:
+            if r is not keep:
+                r.is_active = False
+                removed += 1
+    return removed
+
+
 def refresh_recommendations(student_id: int) -> dict:
-    """Run the engine once. Returns counts of what changed."""
+    """Run the engine once. Returns counts of what changed.
+
+    A per-student lock stops two page loads from running the engine at the same time,
+    which would otherwise create duplicate recommendations."""
+    lock = _student_lock(student_id)
+    with lock:
+        with get_session() as s:
+            _remove_duplicates(s, student_id)
+        return _refresh(student_id)
+
+
+def _refresh(student_id: int) -> dict:
     mastery = topic_mastery(student_id)
     df = assessments_frame(student_id)
     changes = {"created": 0, "closed": 0, "kept": 0}
@@ -262,6 +331,31 @@ def last_engine_run(student_id: int) -> datetime | None:
     with get_session() as s:
         return _utc(s.scalar(select(func.max(StudyPlan.created_at)).where(
             StudyPlan.student_id == student_id, StudyPlan.created_by == "system")))
+
+
+def needs_refresh_many(student_ids) -> set[int]:
+    """Batch version of needs_refresh: the students whose recommendations are out of date (3 queries)."""
+    ids = list(student_ids)
+    if not ids:
+        return set()
+    with get_session() as s:
+        runs = dict(s.execute(select(StudyPlan.student_id, func.max(StudyPlan.created_at))
+                              .where(StudyPlan.student_id.in_(ids), StudyPlan.created_by == "system")
+                              .group_by(StudyPlan.student_id)).all())
+        newest_a = dict(s.execute(select(Assessment.student_id, func.max(Assessment.created_at))
+                                  .where(Assessment.student_id.in_(ids)).group_by(Assessment.student_id)).all())
+        newest_p = dict(s.execute(select(RecommendationProgress.student_id, func.max(RecommendationProgress.updated_at))
+                                  .where(RecommendationProgress.student_id.in_(ids),
+                                         RecommendationProgress.status != "pending")
+                                  .group_by(RecommendationProgress.student_id)).all())
+    out = set()
+    for sid in ids:
+        if sid not in newest_a:
+            continue                                   # no data -> nothing to recommend
+        last = _utc(runs.get(sid))
+        if last is None or any(t is not None and _utc(t) > last for t in (newest_a.get(sid), newest_p.get(sid))):
+            out.add(sid)
+    return out
 
 
 def needs_refresh(student_id: int) -> bool:

@@ -59,7 +59,7 @@ SUBJECT_TEACHERS = {"teacher.a": ["DEMO-DS", "DEMO-OOP"], "teacher.b": ["DEMO-DB
 STUDENTS_PER_OUTCOME = 3
 OUTCOME_BASE = {"Distinction": 82, "Pass": 68, "Fail": 50, "Withdrawn": 45}   # synthetic score levels
 QUIZ_ROUNDS = [("Quiz 1", date(2026, 10, 5)), ("Quiz 2", date(2026, 11, 9))]
-QUIZ_MAX = 20.0
+QUIZ_TOTAL = 20.0   # one quiz per subject; its marks are split equally across the subject's topics
 
 
 def get_or_create_user(s, email, full_name, role):
@@ -110,6 +110,7 @@ def seed():
                     s.add(Topic(subject_id=subj.id, topic_name=t, order_index=i))
             s.flush()
         subjects = s.scalars(select(Subject).where(Subject.course_id == course.id).order_by(Subject.id)).all()
+        teacher_of = {code: t for t, codes in zip(teachers, SUBJECT_TEACHERS.values()) for code in codes}
 
         # ---------------- Demo students linked to real OULAD test-set records (3 per outcome)
         picks = pd.concat([g.sample(STUDENTS_PER_OUTCOME, random_state=RANDOM_SEED)
@@ -144,6 +145,8 @@ def seed():
             base = OUTCOME_BASE[rec["final_result"]]
             for subj in subjects:
                 subject_offset = rng.normal(0, 12)
+                part_max = QUIZ_TOTAL / len(subj.topics)
+                teacher = teacher_of[subj.subject_code]
                 for topic in subj.topics:
                     level = base + subject_offset + rng.normal(0, 8)
                     change = rng.normal(3, 6)          # some improve, some do not
@@ -151,9 +154,10 @@ def seed():
                         pct = float(np.clip(level + r * change + rng.normal(0, 4), 5, 100))
                         s.add(Assessment(
                             student_id=profile.id, subject_id=subj.id, topic_id=topic.id,
-                            assessment_name=f"{quiz_name} — {topic.topic_name} {SYNTHETIC_NOTE}",
-                            assessment_type="quiz", score=round(pct / 100 * QUIZ_MAX * 2) / 2,
-                            maximum_score=QUIZ_MAX, assessment_date=quiz_date, recorded_by=teachers[0].user_id))
+                            assessment_name=(f"{quiz_name}, {subj.subject_name} ({QUIZ_TOTAL:.0f} marks): "
+                                             f"{topic.topic_name} questions {SYNTHETIC_NOTE}"),
+                            assessment_type="quiz", score=round(pct / 100 * part_max * 2) / 2,
+                            maximum_score=part_max, assessment_date=quiz_date, recorded_by=teacher.user_id))
 
         s.flush()
         # ---------------- Subject-wise teachers: A teaches DS + OOP, B teaches DB + DM

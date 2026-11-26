@@ -18,7 +18,7 @@ from datetime import date, datetime, timedelta, timezone
 import pandas as pd
 from sqlalchemy import func, select
 
-from db.models import (Assessment, AuditLog, Enrollment, LearningResource, ModuleRecord, Notification,
+from db.models import (Assessment, AuditLog, Enrollment, LearningResource, ModuleRecord, Notification, Prediction,
                        Recommendation, RecommendationProgress, RecommendationResource, StudentProfile, StudyPlan,
                        Subject, TeacherFeedback, TeacherProfile, Topic, User)
 from db.session import get_session
@@ -85,41 +85,61 @@ def log_view(user: CurrentUser, student_id: int):
 # =============================================================================
 # Class overview
 # =============================================================================
+def _class_mastery(ids) -> dict[int, pd.DataFrame]:
+    frame = learning.assessments_frame_many(ids)
+    out = {}
+    for sid in ids:
+        f = frame[frame["student_id"] == sid] if len(frame) else frame
+        out[sid] = learning.topic_mastery(sid, f)
+    return out
+
+
 def class_overview(user: CurrentUser) -> pd.DataFrame:
     ids = my_student_ids(user)
     if not ids:
         return pd.DataFrame()
+    ids = list(ids)
     since = datetime.now(timezone.utc) - timedelta(days=ENGAGEMENT_DAYS)
     mine = my_subject_ids(user)
-    rows = []
+    # keep recommendations current (heavy, but only for students with new scores or actions)
+    for sid in learning.needs_refresh_many(ids):
+        learning.refresh_recommendations(sid)
+    masteries = _class_mastery(ids)
     with get_session() as s:
         people = s.execute(select(StudentProfile.id, StudentProfile.student_code, User.full_name, StudentProfile.is_demo)
                            .join(User, User.id == StudentProfile.user_id)
                            .where(StudentProfile.id.in_(ids))).all()
+        last_pred = (select(Prediction.student_id, func.max(Prediction.id).label("pid"))
+                     .where(Prediction.student_id.in_(ids)).group_by(Prediction.student_id).subquery())
+        preds = {r.student_id: r for r in s.execute(
+            select(Prediction.student_id, Prediction.predicted_class, Prediction.risk_probability)
+            .join(last_pred, last_pred.c.pid == Prediction.id)).all()}
+        recent = set()
+        for sid, t in s.execute(select(RecommendationProgress.student_id, RecommendationProgress.updated_at).where(
+                RecommendationProgress.student_id.in_(ids),
+                RecommendationProgress.status.in_(["started", "completed"]))).all():
+            if _utc(t) >= since:
+                recent.add(sid)
+        open_recs = dict(s.execute(select(Recommendation.student_id, func.count()).where(
+            Recommendation.student_id.in_(ids), Recommendation.is_active.is_(True))
+            .group_by(Recommendation.student_id)).all())
+        support = dict(s.execute(select(Recommendation.student_id, func.count()).where(
+            Recommendation.student_id.in_(ids), Recommendation.is_active.is_(True),
+            Recommendation.reason.like("%Teacher support suggested%")).group_by(Recommendation.student_id)).all())
+        completed = dict(s.execute(select(RecommendationProgress.student_id, func.count()).where(
+            RecommendationProgress.student_id.in_(ids), RecommendationProgress.status == "completed")
+            .group_by(RecommendationProgress.student_id)).all())
+    rows = []
     for sid, code, name, is_demo in people:
-        if learning.needs_refresh(sid):          # keep each student's recommendations current
-            learning.refresh_recommendations(sid)
-        m = learning.topic_mastery(sid)
+        m = masteries[sid]
         subj = learning.subject_summary(m)
-        pred = ai_service.latest_prediction(sid)
-        with get_session() as s:
-            actions = s.scalars(select(RecommendationProgress.updated_at).where(
-                RecommendationProgress.student_id == sid,
-                RecommendationProgress.status.in_(["started", "completed"]))).all()
-            recent = [t for t in actions if _utc(t) >= since]
-            open_recs = s.scalar(select(func.count()).select_from(Recommendation).where(
-                Recommendation.student_id == sid, Recommendation.is_active.is_(True)))
-            support = s.scalar(select(func.count()).select_from(Recommendation).where(
-                Recommendation.student_id == sid, Recommendation.is_active.is_(True),
-                Recommendation.reason.like("%Teacher support suggested%")))
-            completed = s.scalar(select(func.count()).select_from(RecommendationProgress).where(
-                RecommendationProgress.student_id == sid, RecommendationProgress.status == "completed"))
+        pred = preds.get(sid)
         mastery = float(m["mastery"].mean()) if len(m) else None
         m_mine = m[m["subject_id"].isin(mine)] if len(m) else m
         mine_mastery = float(m_mine["mastery"].mean()) if len(m_mine) else None
         subj_mine = subj[subj["subject_id"].isin(mine)] if len(subj) else subj
         weak = int((m["level"] == "weak").sum()) if len(m) else 0
-        risk = pred["risk_probability"] if pred else None
+        risk = pred.risk_probability if pred else None
         high_risk = risk is not None and risk >= HIGH_RISK
         reasons = []
         if mastery is not None and mastery < ATTENTION_MASTERY:
@@ -128,17 +148,17 @@ def class_overview(user: CurrentUser) -> pd.DataFrame:
             reasons.append(f"{weak} weak topics")
         if high_risk:
             reasons.append(f"AI risk {risk * 100:.0f}%")
-        if support:
+        if support.get(sid, 0):
             reasons.append("no improvement after an activity")
         rows.append({
             "student_id": sid, "Student ID": code, "Name": name, "Demo": is_demo,
             "Mastery": mastery, "My subjects": mine_mastery, "Weak topics": weak,
             "Weakest subject": subj.iloc[0]["subject_name"] if len(subj) else "—",
             "Weakest of mine": subj_mine.iloc[0]["subject_name"] if len(subj_mine) else "—",
-            "AI prediction": pred["predicted_class"] if pred else "Not run",
+            "AI prediction": pred.predicted_class if pred else "Not run",
             "Risk": risk, "High risk": high_risk,
-            "Open recs": open_recs, "Completed": completed,
-            "Low engagement": len(recent) == 0,
+            "Open recs": open_recs.get(sid, 0), "Completed": completed.get(sid, 0),
+            "Low engagement": sid not in recent,
             "Needs attention": bool(reasons), "Why": "; ".join(reasons) if reasons else "On track",
         })
     df = pd.DataFrame(rows)
@@ -148,8 +168,8 @@ def class_overview(user: CurrentUser) -> pd.DataFrame:
 
 def class_subject_performance(user: CurrentUser) -> pd.DataFrame:
     frames, mine = [], my_subject_ids(user)
-    for sid in my_student_ids(user):
-        subj = learning.subject_summary(learning.topic_mastery(sid))
+    for sid, m in _class_mastery(list(my_student_ids(user))).items():
+        subj = learning.subject_summary(m)
         subj = subj[subj["subject_id"].isin(mine)]
         if len(subj):
             frames.append(subj[["subject_name", "mastery"]])

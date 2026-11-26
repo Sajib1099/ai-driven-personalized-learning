@@ -1,7 +1,7 @@
 # --- ML (versions must match the Colab environment the model files were saved in) ---
 scikit-learn==1.6.1
 xgboost==3.4.1 ; sys_platform != "linux"
-xgboost-cpu==3.4.1 ; sys_platform == "linux"
+xgboost-cpu==3.4.1 ; sys_platform == "linux"    # same library without the 200 MB GPU files (servers)
 pandas==2.2.3
 numpy>=2.0,<2.5
 shap==0.54.1
